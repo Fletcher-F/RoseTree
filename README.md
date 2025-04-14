@@ -1,5 +1,5 @@
 # RoseTree (WIP)
-FASTA Blast and Phylogeny Constructor with Metadata
+FASTA Blast and Phylogeny Constructor with Metadata.
 Originally was made to run Roseobacter samples (hence the name). 
 
 This is currently a python program I am starting to develop as part of my summer position at VIU.
