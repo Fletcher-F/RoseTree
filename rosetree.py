@@ -7,17 +7,17 @@ from pathlib import Path
 from Bio import Blast
 from Bio.Seq import Seq
 from xml.etree import ElementTree as ET
+from phytreeviz import TreeViz
 
 """Program Info: RoseTree (Summer 2025 USRA Project)
-Being developed by Fletcher Falk, this is a python program
-which blasts a given input sample to NCBI and constructs a phylogeny based on results.
+Being developed by Fletcher Falk.
+Program blasts a given input sample to NCBI and constructs a phylogeny based on results.
 
 Metadata from NCBI is also parsed and used to supplement phylogeny output.
 Started April. 28th, 2025
 """
-
-"""Change blast email to a argument later"""
 Blast.email = "fletcherfalk@gmail.com"
+"""switch this over to add email for user as argument"""
 
 """Execute bash commands"""
 def execute(command):
@@ -67,7 +67,7 @@ def parsexml(path):
     checklines = len(writecheck.readlines())
     writecheck.close()
 
-    print("Finished parsing.. ", "Wrote: ", checklines, " lines to document blastresults.fasta", "\n", "\n")
+    print("Finished parsing.. ", "Wrote: ", checklines, " lines to document blastresults.fasta", "\n")
 
 def main():
     
@@ -105,12 +105,42 @@ def main():
         parsexml(path)
 
         """MAFFT for sequence alignment of fasta"""
-        print("Performing alignment from results using MAFFT...", "\n")
+        print("Performing alignment from results using MAFFT...")
         print("Using L-INS-i as less than 200 sequences are being aligned.", "\n")
         alignment = "mafft-linsi blastresults.fasta > alignedresults.fasta"
         execute(alignment)
 
+        """Phylogeny construction
+        Starting with RAxML as it is easy to run:
+        consider looking at BEAST
+        Note: This tree is maximum likelihood not a bayesian tree"""
+        print("Building maximum likelihood tree with RAxML all-in-one analysis...")
+        mltree = "raxml-ng --all --msa alignedresults.fasta --model LG+G8+F --tree pars{10} --bs-trees 200 --threads " + threads
+        execute(mltree)
+
+        """Clean up files"""
+        cleanup = ["rm alignedresults.fasta.raxml.r*", "rm alignedresults.fasta.raxml.mlTrees", "rm alignedresults.fasta.raxml.bootstraps", "rm alignedresults.fasta.raxml.startTree", "rm alignedresults.fasta.raxml.support" ]
+        for x in cleanup:
+            execute(x)
+
+        """Draw Tree
+        Testing with phyTreeViz tool instead of running R Studio separate
+        or importing R libraries and packages"""
+        print("Drawing final maximum likelihood tree with phyTreeViz...")
+        inputtree = "alignedresults.fasta.raxml.bestTree"
+        finaltree = TreeViz(inputtree)
+        """
+        Excluded for now as now branch length or confidence exists for current plot
+        See about switch when using bayesian if we shift to that.
+        finaltree.show_branch_length(color="red")
+        finaltree.show_confidence(color="blue")
+        finaltree.show_scale_bar()
+        """
+        """Save final tree"""
+        finaltree.savefig("FinalTree.pdf", dpi=300)
+
     """Done"""
+    print("Final tree exported as pdf...")
     print("Bye!")
 
 """Start Program"""
@@ -122,28 +152,10 @@ THINGS TO BE DONE + brainstorming:
 1. Take the top results to be used in phylogeny?? Maybe based on percent match
 Should I consider and how will we consider an outgroup for the tree?
 
-2. Alignment tool with results: maybe use ClustalW or MAFFT, then put results in .phy
-
-3. Phylogeny tool with .phy: probably IQ-tree.
-
-4. How will we parse the metadata. Not sure if we get enough info might need to
+2. How will we parse the metadata and what to add/how to add to phylogeny. 
+Not sure if we get enough info might need to
 individually search each accession number I want to use and get extra info.
 
-5. Need to determine what metadata to add to phylogeny and how that will be done
-matlab models are maybe a possibility?
-
-6. Also need to move alot of this code into functions and clean it up.
+3. Also need to move alot of this code into functions and clean it up.
 Plus need error checking and input validation if it will be publically shared.
-"""
-
-"""Below is a bunch of extra stuff I had before for testing and stuff
-
-Test execute, remove later
-execute(f"ls {path} >> files.txt")
-file_path = Path("files.txt")
-file_content = file_path.read_text()
-print(file_content)
-
-file_total = len([f for f in Path(path).iterdir() if f.is_file()])
-
 """
