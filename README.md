@@ -1,6 +1,19 @@
-# RoseTree (WIP)
-FASTA Blast and Phylogeny Constructor with Metadata.
-Originally was made to run Roseobacter samples (hence the name). 
+# RoseTree (WIP) 🌳
+## Fasta BLAST and Metadata Phylogeny Constructor Pipeline
 
-This is currently a python program I am starting to develop as part of my summer position at VIU.
-Most of this program is a learning experience and is mostly my first time delving into a Python project. There will likely be some errors and bugs that I will be working through over the summer.
+RoseTree is a pipeline tool that will BLAST a given FASTA nucleotide input using GenBank's API,
+and construct a maximum likelihood phylogenetic tree with adapted metadata from results.
+
+- Written in python using Biopython and TreeViz libraries.
+- Parses and joins XML output into new FASTA file for alignment.
+- Outputs blast results, alignment, metadata, and final phylogeny.
+
+## Description
+
+This is a Python project I am starting to develop as part of my NSERC Undergraduate Summer Research Award at VIU.
+This is my first time working with Python and much of the project is a learning experience. There will likely be some errors and bugs that I will be working on throughout the summer.
+
+## Installation
+
+Currently no package exists. To run, copy the repo and run rosetree.py locally.
+Example: python3 rosetree.py -i ./test/input.fasta -t 8 -e myemail@gmail.com
