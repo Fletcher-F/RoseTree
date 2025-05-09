@@ -16,4 +16,9 @@ This is my first time working with Python and much of the project is a learning 
 ## Installation
 
 Currently no package exists. To run, copy the repo and run rosetree.py locally.
-Example: `python3 rosetree.py -i ./test/input.fasta -t 8 -e myemail@gmail.com`
+Example: 
+```
+function test() {
+  console.log("python3 rosetree.py -i ./test/input.fasta -t 8 -e myemail@gmail.com");
+}
+```
