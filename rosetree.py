@@ -1,14 +1,11 @@
 """Importing libraries"""
-import os
-import subprocess
-import argparse
-import sys
-import Bio
+import os, subprocess, argparse, sys, Bio
 from pathlib import Path
-from Bio import Blast
+from Bio import Blast, Entrez
 from Bio.Seq import Seq
 from phytreeviz import TreeViz
 from roseparser import parsexml
+from rosemetadata import metaparser
 
 """Program Info: RoseTree (VIU Summer 2025 USRA Project)
 Developed by: Fletcher Falk
@@ -52,6 +49,7 @@ def rosetree(args):
     path = args.input
     threads= args.threads
     Blast.email = args.email
+    Entrez.email = args.email
     
     """Check if file exists before starting"""
     validfile = Path(path)
@@ -63,15 +61,17 @@ def rosetree(args):
     validfasta = os.path.splitext(args.input)
     if validfasta[1] in (".fasta", ".fa"):
         print("--- Running RoseTree v0.1 --- \n", "Using ", threads, " threads... \n", "Be sure to checkout my GitHub :) \n", 
-        "https://github.com/Fletcher-F \n", "File path = ", path, "\n \n",
-        "Running qblast using Biopython on nucleotide database..."
-        )
+        "https://github.com/Fletcher-F \n", "File path = ", path, "\n", "Note: if rerunning program, ensure it is in new directory or move old output as output is appended and will cause errors in downstream steps.", 
+        "\n\n", "Running qblast using Biopython on nucleotide database...")
 
         """Blast fasta to NCBI"""
         nuc_blast(path)
 
         """Parse xml into fasta"""
-        parsexml(path)
+        hit_list, inputblast = parsexml(path)
+
+        """Pull metadata after parsing"""
+        metaparser(hit_list, inputblast)
 
         """MAFFT for sequence alignment of fasta"""
         print("Performing alignment from results using MAFFT...")
@@ -125,14 +125,10 @@ THINGS TO BE DONE + brainstorming:
 Should I consider and how will we consider an outgroup for the tree?
 
 2. How will we parse the metadata and what to add/how to add to phylogeny. 
-Not sure if we get enough info might need to
-individually search each accession number I want to use and get extra info.
 
 3. Also need to move alot of this code into functions and clean it up.
 Plus need error checking and input validation if it will be publically shared.
-"""
 
-"""
 Extra TreeViz settings:
 Excluded for now as now branch length or confidence exists for current plot
 See about switch when using bayesian if we shift to that.
