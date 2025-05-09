@@ -13,12 +13,16 @@ and construct a maximum likelihood phylogenetic tree with adapted metadata from 
 This is a Python project I am starting to develop as part of my NSERC Undergraduate Summer Research Award at VIU.
 This is my first time working with Python and much of the project is a learning experience. There will likely be some errors and bugs that I will be working on throughout the summer.
 
+## Upcoming Changes
+
+- Phylogeny will incorporate metadata.
+- Phylogeny format will be cleaner and will likely use a different generation method.
+- Different raxml algorithm will be used to speed up process.
+
 ## Installation
 
 Currently no package exists. To run, copy the repo and run rosetree.py locally.
 Example: 
 ```
-function test() {
-  console.log("python3 rosetree.py -i ./test/input.fasta -t 8 -e myemail@gmail.com");
-}
+python3 rosetree.py -i ./test/input.fasta -t 8 -e myemail@gmail.com
 ```
