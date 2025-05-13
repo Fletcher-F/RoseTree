@@ -30,6 +30,7 @@ def metaparser(accessionlist, inputblast):
 
         """Add a new element off number"""
         ET.SubElement(sequence, "Sequence_num").text = str(count)
+        ET.SubElement(sequence, "Sequence_accession").text = accession
         ET.SubElement(sequence, "Sequence_id").text = metadata[0]['GBSeq_organism']
         """Add source details based on what is available for the given genbank accession"""
         for feature in metadata[0]['GBSeq_feature-table']:
