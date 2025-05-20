@@ -43,7 +43,7 @@ def writefinalfasta():
     """For each sequence in parsed xml"""
     for sequence in root.findall('.//Sequence'):
         lines = [">", sequence.findtext('Sequence_accession'), " ", sequence.findtext('Sequence_id'), "\n", sequence.findtext('full_Sequence'), "\n"]
-        finalfasta.write(lines)
+        finalfasta.writelines(lines)
     finalfasta.close()
 
 """XML Parser Function"""
