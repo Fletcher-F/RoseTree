@@ -25,7 +25,7 @@ def multi_blast(path, blastnum):
     """For each fasta in the directory"""
     for fasta in blastseqs:
         """Blast each fasta to NCBI"""
-        nuc_blast(path, blastnum, blastloop)
+        nuc_blast(fasta, blastnum, blastloop)
         blastloop += 1
         """Fit NCBI API guidelines"""
         if fasta == blastseqs[-1]:
