@@ -1,57 +1,62 @@
 """XML Parser for Rosetree
 Writes the results of blast from XML into FASTA for alignment and phylogeny.
 Developed by: Fletcher Falk"""
-
 import os
 from xml.etree import ElementTree as ET
 
-"""Write new fasta file parsed from XML"""
-def writefasta(path, root, hit_list):
-    """Read contents from input sequence to append in"""
-    inputsequence = open(path, "r")
-    inputblast = inputsequence.readline()
-
-    """Open file and write input sequence"""
-    newfasta = open("blastresults.fasta", "a")
-    """Since readline earlier put first line into file instead of open and close"""
-    newfasta.write(inputblast)
-    newfasta.write(inputsequence.readline())
-    newfasta.write('\n')
-    inputsequence.close()
-
+"""Grab all blast results for Entrez"""
+def blastresults(root, hit_list):
     """Write rest of blast results into file"""
     for hit in root.findall('.//Hit'):
-
         """Add accession to list for metadata
         Checking for dupes of accession (could happen in multi mode)"""
         if hit.findtext('Hit_accession') in hit_list:
             print ("Dupe in blast list, skipping parsing...")
-            continue
-        
+            continue  
         hit_list.append(hit.findtext('Hit_accession'))
-        """Ensure fasta format"""
-        newfasta.write(">")
-        newfasta.write(hit.findtext('Hit_accession'))
-        newfasta.write(" ")
-        newfasta.write(hit.findtext('Hit_def'))
-        newfasta.write('\n')
-        newfasta.write(hit.findtext('.//Hit_hsps/Hsp/Hsp_hseq'))
-        newfasta.write('\n')
+    return hit_list
+
+"""Start new fasta file for results"""
+def writefasta(path, root, hit_list):
+    """Read contents from input sequence to append in"""
+    inputsequence = open(path, "r")
+    inputid = inputsequence.readline().replace('\n', '')
+    """Open file and write input sequence"""
+    newfasta = open("blastresults.fasta", "a")
+    """Since readline earlier put first line into file instead of open and close"""
+    newfasta.write(inputid)
+    newfasta.write('\n')
+    newfasta.write(inputsequence.readline())
+    newfasta.write('\n')
+    inputsequence.close()
+
     """Return final list and input sequences"""
     newfasta.close()
-    return hit_list, inputblast
+    hit_list = blastresults(root, hit_list)
+    return hit_list, inputid
+
+"""Write rest of blast results with associated metadata from Entrez"""
+def writefinalfasta():
+    xmltree = ET.parse("blastmetadata.xml")
+    root = xmltree.getroot()
+    finalfasta = open("blastresults.fasta", "a")
+    """For each sequence in parsed xml"""
+    for sequence in root.findall('.//Sequence'):
+        lines = [">", sequence.findtext('Sequence_accession'), " ", sequence.findtext('Sequence_id'), "\n", sequence.findtext('full_Sequence'), "\n"]
+        finalfasta.write(lines)
+    finalfasta.close()
 
 """XML Parser Function"""
 def parsexml(path):
-    print("Writing result sequences into new fasta file for phylogeny construction...", "\n")
-    xmltree = ET.parse("blast.xml")
+    print("Writing blast results for Entrez...", "\n")
+    xmltree = ET.parse("blast1.xml")
     root = xmltree.getroot()
     hit_list = []
     return writefasta(path, root, hit_list)
 
 """XML Multi Parser Function"""
 def multiparsexml(path):
-    print("Writing multiple sequence results into new fasta file for phylogeny construction...", "\n")
+    print("Writing multiple sequence blast results for Entrez...", "\n")
     blastseqs = [os.path.join(path, file) for file in os.listdir(path)]
     hit_list = []
     inputsequences = []
@@ -71,6 +76,4 @@ def linecheck():
     writecheck = open("blastresults.fasta", "r")
     checklines = len(writecheck.readlines())
     writecheck.close()
-
     print("Finished parsing.. ", "Wrote: ", checklines, " lines to document blastresults.fasta", "\n")  
-    """Return info for metadata after parsing"""
