@@ -2,9 +2,9 @@
 ## Fasta BLAST and Metadata Phylogeny Constructor Pipeline
 
 RoseTree is a pipeline tool that will BLAST a given FASTA nucleotide input using GenBank's API,
-and construct a maximum likelihood phylogenetic tree with adapted metadata from results.
+and construct a maximum likelihood phylogenetic tree with metadata from results.
 
-- Written in Python using Biopython and TreeViz libraries.
+- Written in Python using Biopython and ETE3
 - Parses and joins XML output into new FASTA file for alignment.
 - Outputs blast results, alignment, metadata, and final phylogeny.
 
