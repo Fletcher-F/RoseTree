@@ -15,9 +15,9 @@ This is my first time working with Python and much of the project is a learning 
 
 ## Upcoming Changes
 
-- Phylogeny will incorporate metadata.
-- Phylogeny format will be cleaner and will likely use a different generation method.
-- Different raxml algorithm will be used to speed up process.
+- Short-hand rerun method for just the phylogeny render.
+- Allow user to specify metadata to include.
+- 
 
 ## Installation
 
