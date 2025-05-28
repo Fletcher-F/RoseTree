@@ -16,7 +16,7 @@ This is my first time working with Python and much of the project is a learning 
 ## Upcoming Changes
 
 - Allow user to specify metadata to include.
--
+- Verification of bootstrapping cutoff and model testing
 -
 
 ## Automation 
