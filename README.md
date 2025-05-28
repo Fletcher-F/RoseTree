@@ -15,9 +15,13 @@ This is my first time working with Python and much of the project is a learning 
 
 ## Upcoming Changes
 
-- Short-hand rerun method for just the phylogeny render.
 - Allow user to specify metadata to include.
-- 
+-
+-
+
+## Automation 
+
+Since some of the phylogeny rendering relies on personal preference, some portions of the pipeline cannot be fully automated. If you would like to change how the final render looks and customize the tree, please take a look into the rosephylogeny.py where I have some commented sections indicating how it can be customized.  
 
 ## Installation
 
