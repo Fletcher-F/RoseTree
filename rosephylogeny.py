@@ -3,7 +3,7 @@ Uses ETE3 to build a phylogeny and annotate with parsed metadata
 Developed by: Fletcher Falk"""
 import os, re
 from random import randint
-from ete3 import Tree, TreeStyle, TextFace, faces
+from ete3 import Tree, TreeStyle, TextFace, faces, NodeStyle
 from xml.etree import ElementTree as ET
 
 """Random color generate"""
@@ -61,7 +61,7 @@ def layout_parameters(root, colors, cleanlist, inputblast, samplenum):
             """Check if node is one of the input fasta files"""
             if node.name in inputblast:
                 nonlocal samplenum
-                inputface = TextFace("Sample: " + (str(samplenum)), tight_text=True, fgcolor = "white", fsize = 12)
+                inputface = TextFace("Sample: " + (str(samplenum)), tight_text=True, fgcolor = "white", fsize = 11)
                 inputface.background.color = "#F7879A"
                 faces.add_face_to_node(inputface, node, column=0, position="branch-right")
                 samplenum += 1 
@@ -74,11 +74,13 @@ def layout_parameters(root, colors, cleanlist, inputblast, samplenum):
                         position = cleanlist.index(id[1])
                     else:
                         position = cleanlist.index(id[0])
-            
+
                     """Add text faces for each metadata label"""
-                    face = TextFace(sequence.findtext('Sequence_id'), tight_text=True, fsize = 12)
+                    face = TextFace(sequence.findtext('Sequence_id'), tight_text=True, fsize = 11)
                     face.background.color = colors[position]
                     faces.add_face_to_node(face, node, column=0, position="branch-right")
+                    
+                    """Optional: Metadata Options
                     face2 = TextFace(textfacefix(str(sequence.findtext('.//Source/isolation_source'))), fgcolor = "gray", fsize = 10)
                     face2.margin_left = 15
                     face2.margin_bottom = 10
@@ -95,17 +97,24 @@ def layout_parameters(root, colors, cleanlist, inputblast, samplenum):
                     face5.margin_left = 15
                     face5.margin_bottom = 10
                     faces.add_face_to_node(face5, node, column=4, aligned = True)
+                    """
+
+                    """Optional: Collapsing Nodes
+                    Use the sequence id for the node you want to save and add * to indicate its collapsed from multiple
+                    if node.name == "OL672320":
+                        testface = TextFace("*", fsize= 11)
+                        faces.add_face_to_node(testface, node, column=0, position="branch-bottom")
+                    """
     return custom_layout
 
 """Phylogeny Function"""
-def phylogeny(inputtree, inputblast):
+def phylogeny(inputtree, inputblast, treename):
     print("Drawing final maximum likelihood tree with ETE...\n")
 
     """Construct variables for custom_layout"""
     xmltree = ET.parse("blastmetadata.xml")
     root = xmltree.getroot()
     colors, cleanlist = specieslist(xmltree)
-    samplenum = 1
 
     """Open best tree from raxml"""
     with open (inputtree, "r") as treefile:
@@ -114,17 +123,43 @@ def phylogeny(inputtree, inputblast):
         styletree = TreeStyle()
         styletree.show_leaf_name = True
         styletree.show_branch_length = True
-        styletree.extra_branch_line_type = 0
-        styletree.margin_left = 30
-        styletree.margin_right = 30
-        styletree.margin_top = 30
-        styletree.margin_bottom = 30
+        styletree.margin_left = 25
+        styletree.margin_right = 25
+        styletree.margin_top = 25
+        styletree.margin_bottom = 25
 
-        """Tree Title"""
-        styletree.title.add_face(TextFace("Maximum Likelihood Phylogeny from NCBI Blast of:\n" + inputblast, fsize=14), column=0)
+        """Node Styling"""
+        for node in tree.traverse():
+            stylenode = NodeStyle()
+            stylenode["fgcolor"] = "black"
+            stylenode["vt_line_width"] = 1
+            stylenode["hz_line_width"] = 1
+            stylenode["hz_line_color"] = "black"
+            stylenode["vt_line_color"] = "black"
+            node.set_style(stylenode)
+
+            """Adding bootstrapping support values"""
+            if not node.is_leaf() and node.support >= 60:
+                node.add_face(TextFace(str(node.support), fsize=7, fgcolor="red"), column=0, position="branch-bottom")
+            
+            """Optional: Rerooting the tree
+            Easiest way I found was finding the support value of the node I wanted to reroot from
+            Then detaching the tree
+            if node.support == 82.0:
+                t.set_outgroup(node)
+                rootedtree = node.detach()
+            """
+
+            """Optional: Deleting and collapsing nodes
+            Just made node name equal to the sequence id you want to remove
+            if node.name == "OP595649":
+                node.delete()       
+            """
+
         """Render tree
         Note: os.environ is used due to render bug"""
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
-        styletree.layout_fn = layout_parameters(root, colors, cleanlist, inputblast, samplenum)
-        tree.render("final-tree-render.pdf", tree_style = styletree)
+        styletree.layout_fn = layout_parameters(root, colors, cleanlist, inputblast, 1)
+        tree.render(treename + ".pdf", tree_style = styletree)
+        #rootedtree.render(treename + "rerooted.pdf", tree_style = styletree)
     treefile.close()
