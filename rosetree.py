@@ -29,6 +29,8 @@ def argument_parser():
                         help="Specify total number of threads to use. Default is 1.", default=1)
     parser.add_argument("--email", "-e",
                         help="BLAST API requires an email in case of error.", required=True)
+    parser.add_argument("--outgroup", "-o",
+                        help="Specify the outgroup to be used for the phylogeny. (Give it a path to a fasta file with sequences for outgroup)")
     parser.add_argument("--blasttotal", "-b",
                         help="Specify total number of blast results to use. Default is 50.", default=50)
     parser.add_argument("--multiplesequencemode", "-ms",
@@ -85,6 +87,7 @@ def rosetree(args):
     threads = args.threads
     blastnum = args.blasttotal
     multiblastnum = args.multiblasttotal
+    outgroup = args.outgroup
     """stored as string"""
     mode = args.multiplesequencemode 
     Blast.email = args.email
@@ -95,6 +98,20 @@ def rosetree(args):
     "https://github.com/Fletcher-F \n", "File(s) path = ", path, "\n", "Note: if rerunning program, ensure you are working in a new directory or move old output.\n",
     "Results are appended and will cause errors in downstream steps.\n\n", "Note: ensure fasta input is only 2 lines: one for title, one for sequence.\n\n"
     "Running qblast using Biopython on nucleotide database...\n")
+
+    """Checking outgroup input
+    Then write to fasta for alignment"""
+    if outgroup:
+        print("You specified an outgroup, checking valid format..\n")
+        valid_fasta(outgroup)
+        outgroup = open(outgroup, "r")
+        initialfasta = open("blastresults.fasta", "a")
+        for line in outgroup:
+            initialfasta.write(line)
+        initialfasta.write("\n")
+        initialfasta.close()
+    else:
+        print("WARNING: No outgroup was given. Recommend restarting the program with an outgroup (-o ./test/outgroup.fasta\n)")
 
     modes = {
         "False": single_mode,
@@ -119,7 +136,7 @@ def rosetree(args):
 
     """MAFFT for sequence alignment of fasta"""
     print("Performing alignment from results using MAFFT...")
-    alignment = "mafft --auto --thread %s blastresults.fasta > alignedresults.fasta" % threads
+    alignment = "mafft --auto --leavegappyregion --thread %s blastresults.fasta > alignedresults.fasta" % threads
     execute(alignment)
 
     """Trim alignment with Trimal"""
@@ -128,22 +145,37 @@ def rosetree(args):
     trim = "trimal -in alignedresults.fasta -out trimmedalignedresults.fasta -automated1"
     execute(trim)
 
-    """Phylogeny construction with raxml
-    Note: This tree is maximum likelihood not a bayesian tree"""
+    """Perform model test on alignment"""
+    print("Running model test on alignment results...")
+    modeltest = "modeltest-ng -i trimmedalignedresults.fasta -t ml -p %s -r 12345" % threads
+    execute(modeltest)
+
+    optimalmodel = open("trimmedalignedresults.fasta.out", "r")
+    for line in optimalmodel:
+        if "raxml-ng" in line:
+            commands = line.split(" ")
+            command = commands[-1].rstrip("\n")
+            break
+
+    """Phylogeny construction with RaXML"""
     print("Building maximum likelihood tree with RAxML all-in-one analysis...")
-    mltree = "raxml-ng --all --msa trimmedalignedresults.fasta --model LG+G8+F --tree pars{50},rand{50} --bs-trees 200 --threads %s" % threads
+    mltree = "raxml-ng --all --msa trimmedalignedresults.fasta --model %s --tree pars{25},rand{25} --bs-metric fbp,tbe --threads %s" % (command, threads)
     execute(mltree)
 
-    """Clean up files"""
+    """Clean up files
     cleanup = ["rm trimmedalignedresults.fasta.raxml.r*", "rm trimmedalignedresults.fasta.raxml.mlTrees", "rm trimmedalignedresults.fasta.raxml.bootstraps", "rm trimmedalignedresults.fasta.raxml.startTree", "rm trimmedalignedresults.fasta.raxml.support"]
     for x in cleanup:
         execute(x)
+    """
 
     """Draw Tree"""
     print("Drawing final tree with ETE...\n", "Note: if an error occurs you may have to manually install PyQt5: as it didn't install with ete3...\n",
     "run: pip3 install PyQt5")
-    inputtree = "trimmedalignedresults.fasta.raxml.bestTree"
-    phylogeny(inputtree, inputblast)
+    inputtree = "trimmedalignedresults.fasta.raxml.supportFBP"
+    """Phylogeny data for rerun"""
+    phydata = open("phydata", "a")
+    phydata.write(inputblast)
+    phylogeny(inputtree, inputblast, "final-tree-render")
 
     """Done"""
     print("Final tree exported as pdf...")
