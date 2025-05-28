@@ -30,3 +30,7 @@ Example:
 ```
 python3 rosetree.py -i ./test/input.fasta -t 8 -e myemail@gmail.com
 ```
+
+## Required Libraries
+
+ETE3, Biopython, MAFFT, Trimal, RaXML-NG, Modeltest-NG
