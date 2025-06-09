@@ -79,7 +79,7 @@ def layout_parameters(root, colors, cleanlist, inputblast, samplenum):
                     face = TextFace(sequence.findtext('Sequence_id'), tight_text=True, fsize = 11)
                     face.background.color = colors[position]
                     faces.add_face_to_node(face, node, column=0, position="branch-right")
-                    
+
                     """Optional: Metadata Options
                     face2 = TextFace(textfacefix(str(sequence.findtext('.//Source/isolation_source'))), fgcolor = "gray", fsize = 10)
                     face2.margin_left = 15
@@ -123,10 +123,11 @@ def phylogeny(inputtree, inputblast, treename):
         styletree = TreeStyle()
         styletree.show_leaf_name = True
         styletree.show_branch_length = True
+        styletree.branch_vertical_margin = 1
         styletree.margin_left = 25
         styletree.margin_right = 25
         styletree.margin_top = 25
-        styletree.margin_bottom = 25
+        styletree.margin_bottom = 50
 
         """Node Styling"""
         for node in tree.traverse():
@@ -161,5 +162,4 @@ def phylogeny(inputtree, inputblast, treename):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
         styletree.layout_fn = layout_parameters(root, colors, cleanlist, inputblast, 1)
         tree.render(treename + ".pdf", tree_style = styletree)
-        #rootedtree.render(treename + "rerooted.pdf", tree_style = styletree)
     treefile.close()
