@@ -30,7 +30,7 @@ def argument_parser():
     parser.add_argument("--email", "-e",
                         help="BLAST API requires an email in case of error.", required=True)
     parser.add_argument("--outgroup", "-o",
-                        help="Specify the outgroup to be used for the phylogeny. (Give it a path to a fasta file with sequences for outgroup)")
+                        help="Specify the outgroup to be used for the phylogeny. (Give it a path to a fasta file with sequence for outgroup)")
     parser.add_argument("--blasttotal", "-b",
                         help="Specify total number of blast results to use. Default is 50.", default=50)
     parser.add_argument("--multiplesequencemode", "-ms",
@@ -106,12 +106,15 @@ def rosetree(args):
         valid_fasta(outgroup)
         outgroup = open(outgroup, "r")
         initialfasta = open("blastresults.fasta", "a")
-        for line in outgroup:
-            initialfasta.write(line)
+        outgroupname = outgroup.readline()
+        initialfasta.write(outgroupname)
+        outgroupname = "--outgroup " + outgroupname.split(" ")[0].replace(">", "")
+        initialfasta.write(outgroup.readline())
         initialfasta.write("\n")
         initialfasta.close()
     else:
         print("WARNING: No outgroup was given. Recommend restarting the program with an outgroup (-o ./test/outgroup.fasta\n)")
+        outgroupname = None
 
     modes = {
         "False": single_mode,
@@ -136,7 +139,7 @@ def rosetree(args):
 
     """MAFFT for sequence alignment of fasta"""
     print("Performing alignment from results using MAFFT...")
-    alignment = "mafft --auto --leavegappyregion --thread %s blastresults.fasta > alignedresults.fasta" % threads
+    alignment = "mafft --auto --thread %s blastresults.fasta > alignedresults.fasta" % threads
     execute(alignment)
 
     """Trim alignment with Trimal"""
@@ -155,21 +158,16 @@ def rosetree(args):
         if "raxml-ng" in line:
             commands = line.split(" ")
             command = commands[-1].rstrip("\n")
+            print("Model selected: ", command)
             break
 
     """Phylogeny construction with RaXML"""
     print("Building maximum likelihood tree with RAxML all-in-one analysis...")
-    mltree = "raxml-ng --all --msa trimmedalignedresults.fasta --model %s --tree pars{25},rand{25} --bs-metric fbp,tbe --threads %s" % (command, threads)
+    mltree = "raxml-ng --all --msa trimmedalignedresults.fasta --model %s --tree pars{25},rand{25} --bs-trees 2500 --bs-metric fbp,tbe --seed 12345 --threads %s %s" % (command, threads, outgroupname)
     execute(mltree)
 
-    """Clean up files
-    cleanup = ["rm trimmedalignedresults.fasta.raxml.r*", "rm trimmedalignedresults.fasta.raxml.mlTrees", "rm trimmedalignedresults.fasta.raxml.bootstraps", "rm trimmedalignedresults.fasta.raxml.startTree", "rm trimmedalignedresults.fasta.raxml.support"]
-    for x in cleanup:
-        execute(x)
-    """
-
     """Draw Tree"""
-    print("Drawing final tree with ETE...\n", "Note: if an error occurs you may have to manually install PyQt5: as it didn't install with ete3...\n",
+    print("Drawing final tree (FBP support) with ETE...\n", "Note: if an error occurs you may have to manually install PyQt5: as it didn't install with ete3...\n",
     "run: pip3 install PyQt5")
     inputtree = "trimmedalignedresults.fasta.raxml.supportFBP"
     """Phylogeny data for rerun"""
@@ -179,6 +177,8 @@ def rosetree(args):
 
     """Done"""
     print("Final tree exported as pdf...")
+    print("Check the model test results and confirm model used.")
+    print("If you would like to rerender, use rephylogeny.")
     print("Bye!")
 
 """Main: sets up arguments and runs program"""
