@@ -142,18 +142,20 @@ def rosetree(args):
     alignment = "mafft --auto --thread %s blastresults.fasta > alignedresults.fasta" % threads
     execute(alignment)
 
-    """Trim alignment with Trimal"""
+    """Trim alignment with Trimal
+    Currently disabled: trimming is a bit too harsh for my current analysis
     print("Trimming alignment results using Trimal...")
-    """Automated1 option is optimized for ML trees"""
+    Automated1 option is optimized for ML trees
     trim = "trimal -in alignedresults.fasta -out trimmedalignedresults.fasta -automated1"
     execute(trim)
+    """
 
     """Perform model test on alignment"""
     print("Running model test on alignment results...")
-    modeltest = "modeltest-ng -i trimmedalignedresults.fasta -t ml -p %s -r 12345" % threads
+    modeltest = "modeltest-ng -i alignedresults.fasta -t ml -p %s -r 12345" % threads
     execute(modeltest)
 
-    optimalmodel = open("trimmedalignedresults.fasta.out", "r")
+    optimalmodel = open("alignedresults.fasta.out", "r")
     for line in optimalmodel:
         if "raxml-ng" in line:
             commands = line.split(" ")
@@ -163,13 +165,13 @@ def rosetree(args):
 
     """Phylogeny construction with RaXML"""
     print("Building maximum likelihood tree with RAxML all-in-one analysis...")
-    mltree = "raxml-ng --all --msa trimmedalignedresults.fasta --model %s --tree pars{25},rand{25} --bs-trees 2500 --bs-metric fbp,tbe --seed 12345 --threads %s %s" % (command, threads, outgroupname)
+    mltree = "raxml-ng --all --msa alignedresults.fasta --model %s --tree pars{25},rand{25} --bs-trees 2500 --bs-metric fbp,tbe --seed 12345 --threads %s %s" % (command, threads, outgroupname)
     execute(mltree)
 
     """Draw Tree"""
     print("Drawing final tree (FBP support) with ETE...\n", "Note: if an error occurs you may have to manually install PyQt5: as it didn't install with ete3...\n",
     "run: pip3 install PyQt5")
-    inputtree = "trimmedalignedresults.fasta.raxml.supportFBP"
+    inputtree = "alignedresults.fasta.raxml.supportFBP"
     """Phylogeny data for rerun"""
     phydata = open("phydata", "a")
     phydata.write(inputblast)
