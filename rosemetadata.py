@@ -45,21 +45,25 @@ def metaparser(accessionlist, inputblast):
         metadata = Entrez.read(fetch)
         fetch.close()
 
-        """Add full sequence for phylogeny"""
-        if "complete genome" or "chromosome" in str(metadata[0]['GBSeq_definition']):
-            rRNAsequence = parse16S(metadata, accession)
-            if rRNAsequence == "Error":
-                continue
-            sequence = ET.SubElement(root, "Sequence")
-            ET.SubElement(sequence, "full_Sequence").text = rRNAsequence
-        else:
-            sequence = ET.SubElement(root, "Sequence")
-            ET.SubElement(sequence, "full_Sequence").text = metadata[0]['GBSeq_sequence']
+        sequence = ET.SubElement(root, "Sequence")
 
         """Add a new element off number"""
         ET.SubElement(sequence, "Sequence_num").text = str(count)
         ET.SubElement(sequence, "Sequence_accession").text = accession
         ET.SubElement(sequence, "Sequence_id").text = metadata[0]['GBSeq_organism']
+
+        for feature in metadata[0]['GBSeq_references']:
+            if feature['GBReference_reference'] == '1':
+                ET.SubElement(sequence, "Authors").text = str(feature.get('GBReference_authors'))
+
+        """Add full sequence for phylogeny"""
+        if "complete genome" or "chromosome" in str(metadata[0]['GBSeq_definition']):
+            rRNAsequence = parse16S(metadata, accession)
+            if rRNAsequence == "Error":
+                continue
+            ET.SubElement(sequence, "full_Sequence").text = rRNAsequence
+        else:
+            ET.SubElement(sequence, "full_Sequence").text = metadata[0]['GBSeq_sequence']
 
         """Add source details based on what is available for the given genbank accession"""
         for feature in metadata[0]['GBSeq_feature-table']:
